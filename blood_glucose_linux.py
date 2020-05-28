@@ -1,7 +1,14 @@
 """
 ・Linuxで動かす用のやーつ
-  オリジナルは編集しないこと
-  追記する場合は追記した日時,変更事項を記すこと
+    オリジナルは編集しないこと
+    追記する場合は追記した日時,変更事項を記すこと
+    編集：2020.05.28
+    変更事項：全部
+    
+*注意事項
+    追記・編集するときは，変更した箇所に変更日時と変更事項をコメントアウトすること！
+    変更する前にオリジナル（または前のバージョン）のバックアップをとること
+    →オリジナルを変更したら殴る
 """
 
 """
@@ -41,14 +48,14 @@ import easy_chainer
 
 """
 2. 構造の定義
- 2.1  MLP_01 : MLP, dropout=None, Batch_Normalization=None
- 2.2  MLP_02 : MLP, Dropout, Batch_Normalization
+ 2.1  MLP_none_dropout : MLP, dropout=None, Batch_Normalization=None
+ 2.2  MLP_on_dropout : MLP, Dropout, Batch_Normalization
 """
 
-class MLP_01(chainer.Chain):
+class MLP_none_dropout(chainer.Chain):
 
     def __init__(self, n_units, n_out):
-        super(MLP_01, self).__init__()
+        super(MLP_none_dropout, self).__init__()
         with self.init_scope():
             # the size of the inputs to each layer will be inferred
             self.l1 = L.Linear(None, n_units)  # n_in -> n_units
@@ -62,14 +69,14 @@ class MLP_01(chainer.Chain):
         return self.l3(h2)
    
 # 4層NN(入力→中間，中間→出力)
-class MLP_02(chainer.Chain):
+class MLP_on_dropout(chainer.Chain):
     
     """
     モデルの実装
     """
 
     def __init__(self, n_units, n_out, train=True, drop_out_ratio=0.1):
-        super(MLP_02, self).__init__()
+        super(MLP_on_dropout, self).__init__()
         with self.init_scope():
             # the size of the inputs to each layer will be inferred
             self.l1 = L.Linear(None, n_units)  # n_in -> n_units
@@ -132,34 +139,40 @@ def parse_device(args):
 
     return chainer.get_device(args.device)
   
+"""
+3. データのインポート
+  427data : blood_glucose_fulldata.xlsx
   
+"""
+
 data, teach = easy_chainer.load_Data("/home/fiber_classifier/Desktop/blood_glucose_fulldata.xlsx")
 data = data.astype(numpy.float32)
 teach = teach
+all_data_number = len(teach)
 #print(teach)
 print(teach.shape)
+
+"""
+4. 訓練と検証に分けるよ
+"""
 
 # 回帰させるときに必要（分類はint型）
 teach = teach.astype(numpy.float32)
 
 id_all = numpy.arange(1, len(teach) + 1, 1).astype(numpy.int32) - 1
 print(id_all.shape)
+
+idtrain_data_number = 300
+
+
+# seedは適当に決めた
 numpy.random.seed(13)
-id_train_T = numpy.random.choice(id_all, 300, replace=False) #重複なし
-#print(id_train_T.dtype)
+id_train = numpy.random.choice(id_all, train_data_number, replace=False) #重複なし
+#print(id_train.dtype)
 
-id_test = numpy.delete(id_all, id_train_T)
+id_test = numpy.delete(id_all, id_train)
 #print(id_test)
-id_train = numpy.delete(id_all, id_test)
-#print(id_train)
-
-id_train_1 = teach[0:394]
-id_test_1 = teach[394:427]
-
-id_train = id_train_1.astype(numpy.int32)
-id_test = id_test_1.astype(numpy.int32)
-
-# teach = teach.astype(numpy.float32)
+  
 
 # print("id_train : ", id_train)
 print("id_train : ", id_train.shape)
@@ -168,25 +181,55 @@ print("id_train_type : ", id_train.dtype)
 # print("id_test : ", id_test)
 print("id_test : ", id_test.shape)
 print("id_test : ", id_test.dtype)
+  
 
+# 訓練データの選び方
+# train_data_choice = 0 : ランダムに訓練データを選ぶ
+# train_data_choice = 1 : 前から何番目を訓練データにする
+
+train_data_choice = 0
+
+if (train_data_choice == 0):
+    # ランダムに訓練idをふったとき
+    x_train, y_train = data[:, id_train], teach[id_train]
+    x_test, y_test = data[:, id_test], teach[id_test]
+    
+elif (train_data_choice == 1):
+    # ランダムじゃないとき
+    x_train, y_train = data[:, 0:idtrain_data_number], teach[0:idtrain_data_number]
+    x_test, y_test = data[:, idtrain_data_number:all_data_number], teach[idtrain_data_number:all_data_number]
+    
+"""
 n = 35
 m = 373 - n
 
 x_train, y_train = data[:, 0:m], teach[0:m]
 x_test, y_test = data[:, m:373], teach[m:373]
+"""
+"""
+5. イテレータの生成するよ
+"""
+train_data_iterators = 10
+test_data_iterators = 10
 
 train = tuple_dataset.TupleDataset(x_train.T, y_train.reshape(-1,1 ))
 test = tuple_dataset.TupleDataset(x_test.T, y_test.reshape(-1, 1))
 
-train_iter = chainer.iterators.SerialIterator(train, 10, repeat=True,  shuffle=False)
-test_iter = chainer.iterators.SerialIterator(test, 10, repeat=False, shuffle=False)
+train_iter = chainer.iterators.SerialIterator(train, train_data_iterators, repeat=True,  shuffle=False)
+test_iter = chainer.iterators.SerialIterator(test, test_data_iterators, repeat=False, shuffle=False)
 
-net = MLP_02(1000,1)
+"""
+6. モデル定義
+    どのモデルを使うの？
+"""
+
+net = MLP_on_dropout(1000,1)
 model = L.Classifier(net,
                      lossfun=F.mean_squared_error,
                      accfun = F.r2_score)
 model.compute_accuracy = False
 
+# GPUを使うかどうか？gpu_id:0で使う,gpu_id:-1
 gpu_id = 0
 model.to_gpu()
 
@@ -195,9 +238,16 @@ model.to_gpu()
 optimizer = chainer.optimizers.Adam()
 optimizer.setup(model)
 
+"""
+7. 訓練開始
+    訓練準備
+    訓練開始
+"""
+
 # 学習回数（epoch）とかを決める
+train_epoch = 3000
 updater = training.updaters.StandardUpdater(train_iter, optimizer, device=0)
-trainer = training.Trainer(updater, (3000, 'epoch'), out="Result2019_oono/%s" % time.strftime("%Y%m%d%H%M%S"))
+trainer = training.Trainer(updater, (train_epoch, 'epoch'), out="Result2019_oono/%s" % time.strftime("%Y%m%d%H%M%S"))
 out_directory = "./Result2019_oono/%s" % time.strftime("%Y%m%d_%H%M%S")
 
 # オプションです
@@ -241,6 +291,7 @@ trainer.extend(extensions.ProgressBar())
 #     # Resume from a snapshot
 #     chainer.serializers.load_npz(args.resume, trainer)
 
+# 訓練開始
 trainer.run()
 
 # モデル保存
@@ -252,23 +303,29 @@ numpy.save(arr=y_test, file="/home/fiber_classifier/Desktop/test_id.npy"  )
 numpy.save(arr=y_train, file="/home/fiber_classifier/Desktop/train_id.npy" )
 
 # 検証（訓練データ）
-# train_iter.reset()
+train_iter.reset()
 
 train_batch = train_iter.next()
-train_spc, train_ref = concat_examples(train_batch)  # Test Dataset
+train_spc, train_ref = concat_examples(train_batch)  # Train Dataset
 for i in range(10):
-    cal_ref = train_ref[i]
-    cal_pred = net(train_spc[i].reshape(1, -1)).data
-    print("Ref: %d, Pred: %d " % (cal_ref, cal_pred))
+    train_cal_ref = train_ref[i]
+    train_cal_pred = net(train_spc[i].reshape(1, -1)).data
+    print("Train_Ref: %d, Train_Pred: %d " % (train_cal_ref, train_cal_pred))
     
+    
+# 検証（テストデータ）
+test_iter.reset()
 
-# 検証（訓練データ）
-#train_iter.reset()
-
-train_batch = train_iter.next()
-train_spc, train_ref = concat_examples(train_batch)  # Test Dataset
+test_batch = test_iter.next()
+test_spc, test_ref = concat_examples(test_batch)  # Test Dataset
 for i in range(10):
-    cal_ref = train_ref[i]
-    cal_pred = net(train_spc[i].reshape(1, -1)).data
-    print("Ref: %d, Pred: %d" % (cal_ref, cal_pred))
+    test_val_ref = train_ref[i]
+    test_val_pred = net(train_spc[i].reshape(1, -1)).data
+    print("Test_Ref : %d, Test_Pred : %d " % (test_val_ref, test_val_pred))
     
+ """
+ *注意事項
+    追記・編集するときは，変更した箇所に変更日時と変更事項をコメントアウトすること！
+    変更する前にオリジナル（または前のバージョン）のバックアップをとること
+    →オリジナルを変更したら殴る
+ """
