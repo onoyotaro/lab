@@ -130,16 +130,29 @@ class MLP_on_dropout(chainer.Chain):
 """
 3. データセットのインポート
 """
-# 1,000datas
-data, teach = easy_chainer.load_Data("C:/Users/Owner/Desktop/Normalized/val/new2_1.xlsx")
-data = data.astype(numpy.float32)
-teach = teach
-all_data_number = len(teach)
-print(teach)
-print(teach.shape)
+# easy_chainerがインポートできなかったとき対策
+# easy_chainer_choice = 0 : できないとき，1:あるとき
+easy_chainer_choice = 0
+if (easy_chainer_choice == 0):
+    raw_data = pandas.read_excel("C:/Users/Owner/Desktop/Normalized/val/new2_1.xlsx")
+    data, teach = raw_data.as_matrix()[:-1], raw_data.as_matrix()[-1]
+    print("data : ", data.shape)
+    print("teach : ", teach.shape)
+    all_data_number = len(teach)
 
+elif (easy_chainer_choice == 1):
+
+    # 1,000datas
+    data, teach = easy_chainer.load_Data("C:/Users/Owner/Desktop/Normalized/val/new2_1.xlsx")
+    data = data.astype(numpy.float32)
+    teach = teach
+    all_data_number = len(teach)
+    print(teach)
+    print(teach.shape)
+
+data = data.astype(numpy.float32)
 teach = teach.astype(numpy.float32)
-# print(data.shape)
+
 
 # 教師値にidを割り振る
 id_all = numpy.arange(1, len(teach) + 1, 1).astype(numpy.int32) - 1
