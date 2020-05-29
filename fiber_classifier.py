@@ -55,6 +55,7 @@ class MLP(chainer.Chain):
 
 easy_chainer_choice = 0
 if (easy_chainer_choice == 0):
+    
     raw_data = pandas.read_excel("C:/Users/Owner/Desktop/Normalized/val/new2_1.xlsx")
     data, teach = raw_data.as_matrix()[:-1], raw_data.as_matrix()[-1]
     print("data : ", data.shape)
@@ -62,14 +63,15 @@ if (easy_chainer_choice == 0):
     all_data_number = len(teach)
 
 elif (easy_chainer_choice == 1):
-
     # 1,000datas
     data, teach = easy_chainer.load_Data("C:/Users/Owner/Desktop/Normalized/val/new2_1.xlsx")
     data = data.astype(numpy.float32)
     teach = teach
     all_data_number = len(teach)
-    print(teach)
+    print("data : ", data.shape)
+    print("teach : ", teach.shape)
     print(teach.shape)
+    
 else:
     print("easy_chainer_choiceを見直せ")
 
