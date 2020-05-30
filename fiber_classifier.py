@@ -52,6 +52,8 @@ class MLP(chainer.Chain):
         h1 = F.relu(self.l1(x))
         h2 = F.relu(self.l2(h1))
         return self.l3(h2)
+    
+print("##################################################################")    
 
 easy_chainer_choice = 0
 if (easy_chainer_choice == 0):
@@ -75,6 +77,7 @@ elif (easy_chainer_choice == 1):
 else:
     print("easy_chainer_choiceを見直せ")
 
+# 教師値のtypeをint8にする（分類用）
 data = data.astype(numpy.float32)
 teach = teach.astype(numpy.int8)
 
@@ -100,15 +103,19 @@ data_choice_random = 0
 
 if (data_choice_random == 0):
     # 訓練データをランダムに選ばないとき
-    kunren_data_number = 80
+    kunren_data_number = 84
     x_train, y_train = data[:, 0:kunren_data_number], teach[0:kunren_data_number]
     x_test, y_test = data[:, kunren_data_number:all_data_number], teach[kunren_data_number:all_data_number]
 
-else:
+elif (data_choice_random == 1):
     # 訓練データをランダムに選ぶとき
     x_train, y_train = data[:, id_train], teach[id_train]
     x_test, y_test = data[:, id_test], teach[id_test]
 
+else:
+    print("見直す")
+    
+    
 """
 5. イテレータの生成
 """
