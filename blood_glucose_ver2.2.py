@@ -10,6 +10,7 @@
 昨年度のプログラムを見やすく書き直したい
 これをもとにDELLのほうのプログラムを直したい
 ていうか、DeLL動け
+add:: 2020.06.02 動きました
 """
 
 """
@@ -131,7 +132,7 @@ class MLP_on_dropout(chainer.Chain):
 3. データセットのインポート
 """
 # 1,000datas
-data, teach = easy_chainer.load_Data("C:/Users/Owner/Desktop/Normalized/val/new2_1.xlsx")
+data, teach = easy_chainer.load_Data("ファイルの場所")　# add:: 2020.06.03 ファイルの場所指定を大野のPCの場所から変えました．
 data = data.astype(numpy.float32)
 teach = teach
 all_data_number = len(teach)
