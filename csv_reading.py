@@ -2,6 +2,10 @@
 2020.06.02
 東北大学に送ったcsvファイルをExcelに変換する
 関数名が適当やから後日直す
+
+2020.06.03 
+とりあえず血圧算出用に作成
+ただし、NGなデータがあるっぽいのでNNにかける前に確認すること
 """
 
 import csv, os
@@ -22,9 +26,9 @@ J_list = sorted(glob.glob("C:/Users/Owner/Desktop/csv_folder/被験者J/J_*"))
 
 # print(A_list)
 
-for i, fname in enumerate(A_list):
-    xls = pandas.read_csv(fname, header=None)
-    name = os.path.split(fname)[1].split(".")[0]
+for i, list_name in enumerate(A_list):
+    xls = pandas.read_csv(list_name, header=None)
+    name = os.path.split(list_name)[1].split(".")[0]
     
     if i == 0:       
         arr = xls.as_matrix()[:,0]  # numpy.array
