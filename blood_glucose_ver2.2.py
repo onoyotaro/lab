@@ -10,6 +10,10 @@
 昨年度のプログラムを見やすく書き直したい
 これをもとにDELLのほうのプログラムを直したい
 ていうか、DeLL動け
+
+2020.06.08
+結果をリストに格納してpandas.DataFrameにしてExcelで出力
+出力先とファイル名を指定する
 """
 
 """
@@ -256,7 +260,7 @@ trainer.run()
 8. 検証
     訓練データの検証
     テストデータの検証
-"""
+
 train_iter.reset()
 train_batch = train_iter.next()
 train_spc, train_ref = concat_examples(train_batch)
@@ -265,7 +269,154 @@ for i in range(10):
     train_cal_pred = net(train_spc[i].reshape(1, -1)).data
     print("Train_Ref : %d, Train_Pred : %d" % (train_cal_ref, train_cal_pred))
 
+"""    
+    
+# 訓練データを使ったモデル検証
+# リストに結果をすべて格納　add::2020.06.08
+train_ref_list = []
+train_pred_list = []
+count_step = 0
+j = 0
 
+batch = len(id_train) // train_data_iterators
+loop_kaisuu = batch + 1
+print(batch)
+amari = len(id_train) % train_data_iterators
+print(amari)
+
+for j in range(loop_kaisuu):
+    if (count_step == 0):
+        train_iter.reset()
+
+        train_batch = train_iter.next()
+        train_spc, train_ref = concat_examples(train_batch)  # Test Dataset
+        for i in range(train_data_iterators):
+            cal_ref = train_ref[i]
+            cal_pred = net(train_spc[i].reshape(1, -1)).data
+            # print(" %d" % (cal_ref))
+            train_ref_list.append(math.floor(cal_ref))
+            # print(" %d" % (cal_pred) )
+            train_pred_list.append(math.floor(cal_pred))
+
+       
+        count_step = count_step + 1
+        # print("count : ", count_step)
+    
+
+    elif (0< count_step < batch):
+        
+        train_batch = train_iter.next()
+        train_spc, train_ref = concat_examples(train_batch)  # Test Dataset
+        for i in range(train_data_iterators):
+            cal_ref = train_ref[i]
+            cal_pred = net(train_spc[i].reshape(1, -1)).data
+            # print(" %d" % (cal_ref))
+            train_ref_list.append(math.floor(cal_ref))
+            # print(" %d" % (cal_pred) )
+            train_pred_list.append(math.floor(cal_pred))
+            # print("")
+            
+        
+        count_step = count_step + 1    
+        # print("count_step", count_step)
+
+    elif (count_step == batch):
+        print("last loop")
+        train_batch = train_iter.next()
+        train_spc, train_ref = concat_examples(train_batch)  # Test Dataset
+        for i in range(amari):
+            cal_ref = train_ref[i]
+            cal_pred = net(train_spc[i].reshape(1, -1)).data
+            print(" %d" % (cal_ref))
+            train_ref_list.append(math.floor(cal_ref))
+            print(" %d" % (cal_pred) )
+            train_pred_list.append(math.floor(cal_pred))
+        
+        
+
+print("")
+print(len(train_ref_list))
+print(len(train_pred_list))
+
+# 検証データの検証
+# リストに格納 add::2020.06.08
+test_ref_list = []
+test_pred_list = []
+count_step_val = 0
+val = 0
+
+batch_val = len(id_test) // test_data_iterators
+loop_kaisuu_val = batch_val + 1
+print(batch_val)
+print(loop_kaisuu_val)
+amari_val = len(id_test) % test_data_iterators
+print(amari_val)
+
+for val in range(loop_kaisuu_val):
+    if (count_step_val == 0):
+        test_iter.reset()
+
+        test_batch = test_iter.next()
+        test_spc, test_ref = concat_examples(test_batch)  # Test Dataset
+        for i in range(test_data_iterators):
+            val_ref = test_ref[i]
+            val_pred = net(test_spc[i].reshape(1, -1)).data
+            # print(" %d" % (cal_ref))
+            test_ref_list.append(math.floor(val_ref))
+            # print(" %d" % (cal_pred) )
+            test_pred_list.append(math.floor(val_pred))
+
+       
+        count_step_val = count_step_val + 1
+        # print("count : ", count_step)
+    
+
+    elif (0< count_step_val < batch_val):
+        
+        test_batch = test_iter.next()
+        test_spc, test_ref = concat_examples(test_batch)  # Test Dataset
+        for i in range(test_data_iterators):
+            val_ref = test_ref[i]
+            val_pred = net(test_spc[i].reshape(1, -1)).data
+            # print(" %d" % (cal_ref))
+            test_ref_list.append(math.floor (val_ref))
+            # print(" %d" % (cal_pred) )
+            test_pred_list.append(math.floor(val_pred))
+            # print("")
+            
+        
+        count_step_val = count_step_val + 1    
+        # print("count_step", count_step)
+
+    elif (count_step_val == batch_val):
+        # print("last loop")
+        test_batch = test_iter.next()
+        test_spc, test_ref = concat_examples(test_batch)  # Test Dataset
+        for i in range(amari_val):
+            val_ref = test_ref[i]
+            val_pred = net(test_spc[i].reshape(1, -1)).data
+            # print(" %d" % (cal_ref))
+            test_ref_list.append(math.floor(val_ref))
+            # print(" %d" % (cal_pred) )
+            test_pred_list.append(math.floor(val_pred))
+        
+        
+
+print("")
+print(len(test_ref_list))
+print(len(test_pred_list))
+
+# すべての結果をエクセルに出力
+# add::2020.06.08
+train_ref_df = pandas.DataFrame(train_ref_list, columns=['訓練Ref'])
+train_pred_df = pandas.DataFrame(train_pred_list, columns=['訓練Pred'])
+test_ref_df = pandas.DataFrame(test_ref_list, columns=['検証Ref'])
+test_pred_df = pandas.DataFrame(test_pred_list, columns=['検証Pred'])
+
+df = pandas.concat([train_ref_df, train_pred_df, test_ref_df, test_pred_df], axis=1)
+df.to_excel('Result2018_oono/all_result_2.xlsx')
+
+"""
 test_iter.reset()
 test_batch = test_iter.next()
 test_spc, test_ref = concat_examples(test_batch)
@@ -273,6 +424,8 @@ for i in range(10):
     test_val_ref = test_ref[i]
     test_val_pred = net(test_spc[i].reshape(1, -1)).data
     print("Test_Ref : %d, Test_Pred : %d" % (test_val_ref, test_val_pred))
+"""
+
 
 """
 ＊注意事項
