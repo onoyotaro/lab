@@ -271,7 +271,7 @@ for i in range(10):
 
 """    
     
-# 訓練データを使ったモデル検証
+# 訓練データを使った精度検証
 # リストに結果をすべて格納　add::2020.06.08
 train_ref_list = []
 train_pred_list = []
@@ -297,6 +297,8 @@ for j in range(loop_kaisuu):
             train_ref_list.append(math.floor(cal_ref))
             # print(" %d" % (cal_pred) )
             train_pred_list.append(math.floor(cal_pred))
+            print("Ref : %d, Pred : %d" % (cal_ref, cal_pred))
+            # 最初の10個だけ使って大きな間違いがないかを確認 add::2020.06.10
 
        
         count_step = count_step + 1
@@ -365,6 +367,8 @@ for val in range(loop_kaisuu_val):
             test_ref_list.append(math.floor(val_ref))
             # print(" %d" % (cal_pred) )
             test_pred_list.append(math.floor(val_pred))
+            print("Ref : %d, Pred : %d" % (val_ref, val_pred))
+            # 最初の10個だけ表示して大きな間違いがないかを確認 add::2020.06.10
 
        
         count_step_val = count_step_val + 1
